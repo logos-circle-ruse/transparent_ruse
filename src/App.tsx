@@ -151,7 +151,17 @@ function App() {
     <div className="app">
       <header className="hero">
         <div className="top-nav">
-          <div className="brand-mark">TR.</div>
+          <button
+            type="button"
+            className="brand-mark-btn"
+            onClick={() => {
+              setActivePage("dashboard");
+              closeMobileMenu();
+            }}
+            aria-label={text.menuDashboard}
+          >
+            <span className="brand-mark">TR.</span>
+          </button>
           <button
             type="button"
             className={isMobileMenuOpen ? "hamburger-btn open" : "hamburger-btn"}
@@ -320,7 +330,7 @@ function App() {
         </main>
       ) : (
         <main className="submit-grid">
-          <SignalForm text={text} onSubmitted={refreshSignals} />
+          <SignalForm text={text} locale={locale} onSubmitted={refreshSignals} />
         </main>
       )}
       {voteNotice ? <p className="banner-info floating-banner">{voteNotice}</p> : null}

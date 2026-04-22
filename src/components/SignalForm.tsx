@@ -6,21 +6,31 @@ import {
   type DragEvent,
   type FormEvent,
 } from "react";
-import type { AppTranslations } from "../i18n";
+import type { AppTranslations, Locale } from "../i18n";
+import { ruseNeighborhoods } from "../data/ruseNeighborhoods";
 
 interface SignalFormProps {
   text: AppTranslations;
+  locale: Locale;
   onSubmitted: () => Promise<void>;
 }
 
 const intakeUrl = import.meta.env.VITE_SUPABASE_INTAKE_URL;
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
-export function SignalForm({ text, onSubmitted }: SignalFormProps) {
+export function SignalForm({ text, locale, onSubmitted }: SignalFormProps) {
+  const neighborhoodOptions = useMemo(
+    () =>
+      ruseNeighborhoods.map((neighborhood) => ({
+        id: neighborhood.id,
+        label: locale === "bg" ? neighborhood.nameBg : neighborhood.nameEn,
+      })),
+    [locale]
+  );
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [district, setDistrict] = useState("");
-  const [submitterName, setSubmitterName] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
@@ -30,10 +40,7 @@ export function SignalForm({ text, onSubmitted }: SignalFormProps) {
   const turnstileRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetId = useRef<string | number | null>(null);
 
-  const canSubmit =
-    title.trim().length >= 5 &&
-    description.trim().length >= 20 &&
-    (!turnstileSiteKey || Boolean(turnstileToken));
+  const canSubmit = title.trim().length >= 5 && description.trim().length >= 20;
   const previewImages = useMemo(
     () =>
       attachments
@@ -127,7 +134,6 @@ export function SignalForm({ text, onSubmitted }: SignalFormProps) {
     formData.append("title", title);
     formData.append("description", description);
     formData.append("district", district);
-    formData.append("submitterName", submitterName);
     formData.append("turnstileToken", turnstileToken);
     attachments.forEach((file) => {
       formData.append("attachments", file);
@@ -148,7 +154,6 @@ export function SignalForm({ text, onSubmitted }: SignalFormProps) {
     setTitle("");
     setDescription("");
     setDistrict("");
-    setSubmitterName("");
     setAttachments([]);
     setTurnstileToken("");
     if (window.turnstile && turnstileWidgetId.current !== null) {
@@ -208,18 +213,19 @@ export function SignalForm({ text, onSubmitted }: SignalFormProps) {
 
         <label>
           {text.fieldDistrict}
-          <input
+          <select
             value={district}
             onChange={(event) => setDistrict(event.target.value)}
-          />
-        </label>
-
-        <label>
-          {text.fieldName}
-          <input
-            value={submitterName}
-            onChange={(event) => setSubmitterName(event.target.value)}
-          />
+          >
+            <option value="">
+              {locale === "bg" ? "Избери квартал" : "Select neighborhood"}
+            </option>
+            {neighborhoodOptions.map((neighborhood) => (
+              <option key={neighborhood.id} value={neighborhood.label}>
+                {neighborhood.label}
+              </option>
+            ))}
+          </select>
         </label>
 
         <fieldset className="attachment-fieldset">

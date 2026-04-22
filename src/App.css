@@ -30,6 +30,13 @@
   color: transparent;
 }
 
+.brand-mark-btn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
 .menu-tabs {
   display: inline-flex;
   gap: 0.4rem;
