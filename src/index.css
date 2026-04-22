@@ -1,0 +1,69 @@
+:root {
+  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #e8edf7;
+  background: #091221;
+  line-height: 1.5;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --text-primary: #e8edf7;
+  --text-secondary: #c2cce0;
+  --text-muted: #89a7d6;
+  --clr-primary: #0ea5a4;
+  --clr-primary-dark: #0f766e;
+  --clr-indigo: #0284c7;
+  --surface-primary: rgba(11, 24, 44, 0.92);
+  --surface-secondary: rgba(17, 34, 60, 0.55);
+  --border-primary: #2b3952;
+  --border-strong: #334566;
+  --border-hover: #57b6ff;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --btn-grad: linear-gradient(135deg, var(--clr-primary-dark), var(--clr-indigo));
+  --grad-text: linear-gradient(135deg, #8dd8ff, #9deccb, #bad0ff);
+  --page-grad-1: #18365d;
+  --page-grad-2: #14263f;
+  --page-base: #091221;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, var(--page-grad-1), transparent 55%),
+    radial-gradient(circle at bottom left, var(--page-grad-2), transparent 45%),
+    var(--page-base);
+  color: var(--text-primary);
+}
+
+button {
+  cursor: pointer;
+}
+
+body[data-theme="light"] {
+  --text-primary: #1e2633;
+  --text-secondary: #39495f;
+  --text-muted: #5d708d;
+  --clr-primary: #0ea5a4;
+  --clr-primary-dark: #0f766e;
+  --clr-indigo: #0284c7;
+  --surface-primary: rgba(255, 255, 255, 0.95);
+  --surface-secondary: rgba(245, 249, 255, 0.92);
+  --border-primary: #c7d3e6;
+  --border-strong: #b2c3dc;
+  --border-hover: #2c86e6;
+  --shadow-sm: 0 2px 8px rgba(14, 165, 164, 0.15);
+  --shadow-md: 0 10px 28px rgba(14, 165, 164, 0.2);
+  --btn-grad: linear-gradient(135deg, var(--clr-primary-dark), var(--clr-indigo));
+  --grad-text: linear-gradient(135deg, #0f766e, #0284c7, #4f46e5);
+  --page-grad-1: #dce7f7;
+  --page-grad-2: #edf4ff;
+  --page-base: #f5f8ff;
+}
