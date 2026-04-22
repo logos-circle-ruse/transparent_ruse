@@ -14,10 +14,10 @@ This folder now contains the first production-ready backend building blocks:
   - duplicate hinting
   - multipart handling (text + files)
   - insert into `signals`
-- `migrations/20260422_0002_signal_attachments.sql`
+- `migrations/202604230001_signal_attachments.sql`
   - `signal_attachments` table
   - public storage bucket `signal-attachments`
-- `migrations/20260422_0003_signal_voting_priority.sql`
+- `migrations/202604230002_signal_voting_priority.sql`
   - priority and vote counters on `signals`
   - `signal_votes` table for unique per-user voting
 - `functions/vote/index.ts`
