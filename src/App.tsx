@@ -60,7 +60,11 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<"all" | SignalPriority>("all");
   const [neighborhoodFilter, setNeighborhoodFilter] = useState<string>("all");
-  const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
+  const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
+  const selectedSignal = useMemo(
+    () => signals.find((s) => s.id === selectedSignalId) ?? null,
+    [signals, selectedSignalId]
+  );
   const [voteNotice, setVoteNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -118,34 +122,27 @@ function App() {
 
   const handleVote = async (signalId: string, voteType: "up" | "down") => {
     try {
-      await voteSignal(signalId, voteType);
-      setSignals((current) => {
-        const nextSignals = current.map((signal) => {
-          if (signal.id !== signalId) return signal;
-
-          const next =
-            voteType === "up"
-              ? { ...signal, upvotes: signal.upvotes + 1 }
-              : { ...signal, downvotes: signal.downvotes + 1 };
-
-          const score = next.upvotes - next.downvotes;
-          const priority: SignalPriority =
-            score >= 30 ? "Critical" : score >= 12 ? "High" : "Normal";
-          return { ...next, priority };
-        });
-
-        if (selectedSignal?.id === signalId) {
-          const nextSelected = nextSignals.find((signal) => signal.id === signalId) ?? null;
-          setSelectedSignal(nextSelected);
-        }
-
-        return nextSignals;
-      });
-      setVoteNotice(text.voteSuccess);
-    } catch {
-      setVoteNotice(text.voteError);
+    const updatedSignal = await voteSignal(signalId, voteType);
+    if (updatedSignal) {
+      setSignals((current) =>
+        current.map((signal) =>
+          signal.id !== signalId
+            ? signal
+            : {
+                ...signal,
+                upvotes: updatedSignal.upvotes,
+                downvotes: updatedSignal.downvotes,
+                priority: updatedSignal.priority as SignalPriority,
+              }
+        )
+      );
     }
-  };
+
+    setVoteNotice(text.voteSuccess);
+  } catch {
+    setVoteNotice(text.voteError);
+  }
+};
 
   return (
     <div className="app">
@@ -325,7 +322,8 @@ function App() {
             priorityHighLabel={text.priorityHigh}
             priorityNormalLabel={text.priorityNormal}
             onPriorityFilterChange={setPriorityFilter}
-            onOpenSignal={(signal) => setSelectedSignal(signal)}
+            onOpenSignal={(signal) => setSelectedSignalId(signal.id)}
+
           />
         </main>
       ) : (
@@ -342,7 +340,8 @@ function App() {
           statusLabel={(status) => labelByStatus[status]}
           priorityLabel={(priority) => getPriorityLabel(priority, text)}
           onVote={handleVote}
-          onClose={() => setSelectedSignal(null)}
+          onClose={() => setSelectedSignalId(null)}
+
         />
       ) : null}
     </div>

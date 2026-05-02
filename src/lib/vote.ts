@@ -4,6 +4,14 @@ const voteUrl = import.meta.env.VITE_SUPABASE_VOTE_URL;
 
 type VoteType = "up" | "down";
 
+interface UpdatedSignal {
+  id: string;
+  upvotes: number;
+  downvotes: number;
+  priority: string;
+}
+
+
 function getVoterFingerprint() {
   const key = "transparent-ruse-voter-id";
   const current = localStorage.getItem(key);
@@ -16,21 +24,24 @@ function getVoterFingerprint() {
   return next;
 }
 
-export async function voteSignal(signalId: string, voteType: VoteType) {
+export async function voteSignal(signalId: string, voteType: VoteType): Promise<UpdatedSignal | undefined> {
+
   const voterFingerprint = getVoterFingerprint();
 
   if (voteUrl) {
-    const response = await fetch(voteUrl, {
+    const res = await fetch(voteUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ signalId, voteType, voterFingerprint }),
     });
 
-    if (!response.ok) {
-      const payload = (await response.json()) as { error?: string };
+    const payload = await res.json() as { error?: string; signal?: UpdatedSignal };
+
+    if (!res.ok) {
       throw new Error(payload.error ?? "Vote request failed.");
     }
-    return;
+   
+  return payload.signal;
   }
 
   if (!hasSupabaseEnv || !supabase) {
