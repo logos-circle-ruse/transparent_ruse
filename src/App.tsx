@@ -9,6 +9,9 @@ import { SignalList } from "./components/SignalList";
 import { SignalModal } from "./components/SignalModal";
 import { SignalForm } from "./components/SignalForm";
 import { StatusPieChart } from "./components/StatusPieChart";
+import { AdminLogin } from "./components/admin/AdminLogin";
+import { AdminPortal } from "./components/admin/AdminPortal";
+import { useAdminAuth } from "./hooks/useAdminAuth";
 import {
   statusLabels,
   translations,
@@ -56,7 +59,12 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFallback, setIsFallback] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [activePage, setActivePage] = useState<"dashboard" | "submit">("dashboard");
+  const [activePage, setActivePage] = useState<"dashboard" | "submit" | "admin">(() => {
+    if (window.location.hash === "#admin") {
+      return "admin";
+    }
+    return "dashboard";
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<"all" | SignalPriority>("all");
   const [neighborhoodFilter, setNeighborhoodFilter] = useState<string>("all");
@@ -66,6 +74,18 @@ function App() {
     [signals, selectedSignalId]
   );
   const [voteNotice, setVoteNotice] = useState<string | null>(null);
+  const { isAuthenticated: isAdminAuthenticated, isLoading: isAdminAuthLoading } = useAdminAuth();
+
+  useEffect(() => {
+    const syncAdminRoute = () => {
+      if (window.location.hash === "#admin") {
+        setActivePage("admin");
+      }
+    };
+
+    window.addEventListener("hashchange", syncAdminRoute);
+    return () => window.removeEventListener("hashchange", syncAdminRoute);
+  }, []);
 
   useEffect(() => {
     document.body.dataset.theme = theme;
@@ -119,6 +139,14 @@ function App() {
   const criticalCount = signals.filter((signal) => signal.priority === "Critical").length;
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const leaveAdminPortal = () => {
+    if (window.location.hash === "#admin") {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    setActivePage("dashboard");
+    closeMobileMenu();
+  };
 
   const handleVote = async (signalId: string, voteType: "up" | "down") => {
     try {
@@ -254,7 +282,7 @@ function App() {
 
         <p className="eyebrow">{text.eyebrow}</p>
         <h1>{text.heroTitle}</h1>
-        <p>{activePage === "dashboard" ? text.heroDescription : text.heroSubmitDescription}</p>
+        <p>{activePage === "dashboard" ? text.heroDescription : activePage === "submit" ? text.heroSubmitDescription : text.adminSubtitle}</p>
         {activePage === "dashboard" ? (
           <section className="stats-cta">
             <h2>{text.statsCtaTitle}</h2>
@@ -323,12 +351,32 @@ function App() {
             priorityNormalLabel={text.priorityNormal}
             onPriorityFilterChange={setPriorityFilter}
             onOpenSignal={(signal) => setSelectedSignalId(signal.id)}
-
           />
         </main>
-      ) : (
+      ) : activePage === "submit" ? (
         <main className="submit-grid">
           <SignalForm text={text} locale={locale} onSubmitted={refreshSignals} />
+        </main>
+      ) : isAdminAuthLoading ? (
+        <main className="admin-grid">
+          <p className="banner-info">{text.adminLoading}</p>
+        </main>
+      ) : isAdminAuthenticated ? (
+        <AdminPortal
+          text={text}
+          locale={locale}
+          onBackToPublic={leaveAdminPortal}
+          onSignalsChanged={refreshSignals}
+        />
+      ) : (
+        <main className="admin-grid">
+          <AdminLogin
+            text={text}
+            onSignedIn={() => {
+              window.location.hash = "#admin";
+              setActivePage("admin");
+            }}
+          />
         </main>
       )}
       {voteNotice ? <p className="banner-info floating-banner">{voteNotice}</p> : null}

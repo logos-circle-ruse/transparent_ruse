@@ -776,17 +776,147 @@
   font-size: 0.9rem;
 }
 
+.field-optional-hint {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-muted, var(--text-secondary));
+  opacity: 0.75;
+}
+
+.field-with-hint {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.field-length-hint {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-muted, var(--text-secondary));
+  margin: 0;
+}
+
+.field-length-hint.ok {
+  color: #1f8f4f;
+}
+
+.ai-review-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-secondary) 90%, transparent);
+}
+
+.ai-review-modal {
+  width: min(920px, 100%);
+}
+
+.ai-review-modal-lead {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.ai-review-field-label {
+  margin: 0.6rem 0 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ai-review-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.ai-review-reason {
+  margin: 0 0 0.8rem;
+  color: var(--text-secondary);
+}
+
+.ai-review-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.ai-review-card {
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: var(--surface-primary);
+}
+
+.ai-review-card.muted {
+  opacity: 0.92;
+}
+
+.ai-review-card h4 {
+  margin: 0 0 0.5rem;
+}
+
+.ai-review-title {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.ai-review-text {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+  color: var(--text-secondary);
+  max-height: 280px;
+  overflow: auto;
+}
+
+.ai-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .ai-review-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.submit-blocked-hint {
+  margin-top: -0.35rem;
+}
+
 .signal-form input,
-.signal-form textarea {
+.signal-form textarea,
+.signal-form select {
   border-radius: 10px;
   border: 1px solid var(--border-strong);
   background: var(--surface-secondary);
   color: var(--text-primary);
   padding: 0.55rem 0.7rem;
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .signal-form textarea {
   resize: vertical;
+}
+
+.signal-form select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2389a7d6' stroke-width='2'%3E%3Cpath d='M5 7.5 10 12.5 15 7.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 1rem;
+  padding-right: 2.1rem;
+  cursor: pointer;
+}
+
+body[data-theme="light"] .signal-form select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235d708d' stroke-width='2'%3E%3Cpath d='M5 7.5 10 12.5 15 7.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 .signal-form button {
@@ -1192,5 +1322,580 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.admin-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.admin-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-head {
+  align-items: flex-start;
+}
+
+.admin-head-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-tab {
+  border: 1px solid var(--border-primary);
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-tab:hover,
+.admin-tab.active {
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.admin-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.admin-subtab {
+  border: 1px solid var(--border-primary);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.admin-subtab.active {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-settings-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-signal-context {
+  margin-bottom: 0.8rem;
+}
+
+.admin-signal-context-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.admin-signal-context-head h3 {
+  margin: 0;
+}
+
+.admin-signal-context-meta {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.admin-signal-context-id {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.admin-signal-context-description {
+  margin: 0.6rem 0 0;
+  color: var(--text-secondary);
+}
+
+.admin-signal-context-timeline {
+  margin-top: 0.7rem;
+}
+
+.admin-signal-context-timeline ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1rem;
+}
+
+.admin-workbench-section {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.admin-workbench-details {
+  margin-top: 0.5rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: color-mix(in srgb, var(--surface-secondary) 88%, transparent);
+}
+
+.admin-workbench-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.admin-workbench-details textarea,
+.admin-workbench-details button {
+  margin-top: 0.6rem;
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.admin-signal-list ul {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-signal-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border-primary);
+  background: var(--surface-secondary);
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  display: grid;
+  gap: 0.2rem;
+  cursor: pointer;
+}
+
+.admin-signal-item span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.admin-signal-list,
+.admin-signal-list h3,
+.admin-signal-item strong {
+  color: var(--text-primary);
+}
+
+.admin-shell input,
+.admin-shell textarea,
+.admin-shell select {
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  padding: 0.65rem 0.8rem;
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-shell textarea {
+  resize: vertical;
+}
+
+.admin-shell select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2389a7d6' stroke-width='2'%3E%3Cpath d='M5 7.5 10 12.5 15 7.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 1rem;
+  padding-right: 2.1rem;
+}
+
+body[data-theme="light"] .admin-shell select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235d708d' stroke-width='2'%3E%3Cpath d='M5 7.5 10 12.5 15 7.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.admin-primary-btn {
+  width: fit-content;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.65rem 1.1rem;
+  background: var(--btn-grad);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-primary-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-primary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-signal-item.active {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-editor-form,
+.admin-login-form {
+  max-width: 760px;
+}
+
+.admin-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.admin-full-label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.admin-context-box,
+.admin-review-result,
+.admin-custom-event,
+.admin-timeline-preview {
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 0.9rem;
+  background: color-mix(in srgb, var(--surface-secondary) 88%, transparent);
+}
+
+.admin-review-result.ok {
+  border-color: color-mix(in srgb, #22c55e 45%, var(--border-primary));
+}
+
+.admin-review-result.warn {
+  border-color: color-mix(in srgb, #f59e0b 45%, var(--border-primary));
+}
+
+.admin-flow-steps {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  color: var(--text-muted);
+}
+
+.admin-testing-layout {
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+}
+
+.admin-json {
+  margin: 0.8rem 0 0;
+  padding: 0.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-primary);
+  background: color-mix(in srgb, var(--surface-secondary) 92%, transparent);
+  color: var(--text-primary);
+  overflow: auto;
+  max-height: 360px;
+}
+
+.admin-run-ok {
+  color: color-mix(in srgb, #22c55e 70%, var(--text-primary));
+}
+
+.admin-run-bad {
+  color: color-mix(in srgb, #f59e0b 70%, var(--text-primary));
+}
+
+.admin-login-card {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.admin-catalog-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-neighborhoods-compact {
+  padding: 0.9rem 1rem;
+}
+
+.admin-neighborhoods-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-neighborhoods-heading {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.admin-neighborhoods-heading h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.admin-neighborhoods-heading span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.admin-neighborhoods-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.admin-neighborhoods-controls select {
+  min-width: 170px;
+  max-width: 240px;
+}
+
+.admin-neighborhoods-form {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-neighborhoods-form label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.88rem;
+}
+
+.admin-neighborhoods-form .admin-field-row {
+  gap: 0.55rem;
+}
+
+.admin-neighborhoods-form .admin-head-actions {
+  margin-top: 0.1rem;
+}
+
+.admin-platform-reply {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-primary);
+}
+
+.admin-platform-reply-note {
+  margin: 0.25rem 0 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.admin-users-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.admin-user-row,
+.admin-event-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.admin-user-row span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.admin-attachments {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.admin-attachment-list {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.admin-attachment-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.admin-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-template-vars {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.admin-flows-panel,
+.admin-flows-layout {
+  width: 100%;
+}
+
+.admin-flow-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.8rem 0 1rem;
+}
+
+.admin-flow-legend-item,
+.admin-flow-step-actor {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--border-primary);
+}
+
+.actor-citizen {
+  background: color-mix(in srgb, #3b82f6 18%, transparent);
+  border-color: color-mix(in srgb, #3b82f6 35%, var(--border-primary));
+}
+
+.actor-ai {
+  background: color-mix(in srgb, #a855f7 18%, transparent);
+  border-color: color-mix(in srgb, #a855f7 35%, var(--border-primary));
+}
+
+.actor-municipality {
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  border-color: color-mix(in srgb, #f59e0b 35%, var(--border-primary));
+}
+
+.actor-system {
+  background: color-mix(in srgb, #64748b 18%, transparent);
+  border-color: color-mix(in srgb, #64748b 35%, var(--border-primary));
+}
+
+.admin-flow-diagram {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0.5rem 0 1rem;
+}
+
+.admin-flow-diagram-segment {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.admin-flow-step-card {
+  width: min(280px, 72vw);
+  border: 1px solid var(--border-primary);
+  border-radius: 14px;
+  padding: 0.85rem;
+  background: color-mix(in srgb, var(--surface-secondary) 90%, transparent);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-flow-step-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.admin-flow-step-index {
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.admin-flow-tech-key {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.admin-flow-step-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.admin-flow-arrow {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  color: var(--text-muted);
+  min-width: 2rem;
+}
+
+.admin-flow-arrow-line {
+  display: block;
+  width: 1.2rem;
+  height: 2px;
+  background: color-mix(in srgb, var(--text-muted) 70%, transparent);
+}
+
+.admin-flow-arrow-head {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+@media (max-width: 980px) {
+  .admin-flow-diagram {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-flow-diagram-segment {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-flow-arrow {
+    justify-content: center;
+    transform: rotate(90deg);
+    margin: 0.2rem 0;
+  }
+
+  .admin-flow-step-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 980px) {
+  .admin-layout,
+  .admin-field-row {
+    grid-template-columns: 1fr;
   }
 }

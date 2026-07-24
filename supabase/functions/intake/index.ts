@@ -1,17 +1,21 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  MODERATION_SYSTEM_PROMPT,
+  buildFormattedLetterBody,
+  buildModerationUserPrompt,
+  findDuplicateSignal,
+  parseModerationContent,
+  resolveSubmittedDescription,
+  type GroqModeration,
+  type ModerationInput,
+} from "../_shared/moderation.ts";
+import { resolveOrFallback } from "../_shared/text.ts";
 
-interface IntakePayload {
-  title: string;
-  description: string;
-  district?: string;
-  submitterName?: string;
+interface IntakePayload extends ModerationInput {
   turnstileToken?: string;
-}
-
-interface GroqModeration {
-  decision: "approved" | "rejected";
-  reason: string;
-  duplicate_hint: string;
+  mode?: "preview" | "submit";
+  previewId?: string;
+  descriptionChoice?: "formatted" | "original";
 }
 
 interface SignalTimelineSeed {
@@ -36,6 +40,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const PREVIEW_TTL_MINUTES = 30;
+
 function response(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -54,12 +60,16 @@ async function parseSubmission(request: Request): Promise<ParsedSubmission> {
   const contentType = request.headers.get("content-type") ?? "";
   if (contentType.includes("multipart/form-data")) {
     const formData = await request.formData();
+    const choice = String(formData.get("descriptionChoice") ?? "");
     const payload: IntakePayload = {
       title: String(formData.get("title") ?? ""),
       description: String(formData.get("description") ?? ""),
       district: String(formData.get("district") ?? ""),
       submitterName: String(formData.get("submitterName") ?? ""),
       turnstileToken: String(formData.get("turnstileToken") ?? ""),
+      mode: String(formData.get("mode") ?? "submit") === "preview" ? "preview" : "submit",
+      previewId: String(formData.get("previewId") ?? "") || undefined,
+      descriptionChoice: choice === "original" ? "original" : choice === "formatted" ? "formatted" : undefined,
     };
 
     const attachments = formData
@@ -98,14 +108,45 @@ async function verifyTurnstile(token?: string) {
   return Boolean(parsed.success);
 }
 
-async function moderateSignalWithGroq(payload: IntakePayload): Promise<GroqModeration> {
+function getPublicSiteUrl() {
+  return Deno.env.get("PUBLIC_SITE_URL")?.trim() || null;
+}
+
+function toModerationInput(payload: IntakePayload): ModerationInput {
+  const publicSiteUrl = getPublicSiteUrl();
+  return {
+    title: payload.title,
+    description: payload.description,
+    district: payload.district,
+    submitterName: payload.submitterName,
+    publicSiteUrl: publicSiteUrl ?? undefined,
+  };
+}
+
+function buildFallbackModeration(payload: ModerationInput, reason: string): GroqModeration {
+  const districtLine = payload.district?.trim()
+    ? `Квартал/локация: ${payload.district.trim()}.`
+    : "Квартал/локация: неуточнена.";
+
+  return {
+    decision: "approved",
+    reason,
+    duplicate_hint: "none",
+    formatted_title: payload.title.trim(),
+    formatted_description: buildFormattedLetterBody(payload, [payload.description.trim(), districtLine]),
+    allow_original: true,
+    summary: payload.description.slice(0, 180),
+  };
+}
+
+async function moderateSignalWithGroq(payload: ModerationInput): Promise<GroqModeration> {
+  const publicSiteUrl = getPublicSiteUrl();
   const groqApiKey = Deno.env.get("GROQ_API_KEY");
   if (!groqApiKey) {
-    return {
-      decision: "approved",
-      reason: "GROQ_API_KEY not configured. Accepted by fallback policy.",
-      duplicate_hint: "none",
-    };
+    return buildFallbackModeration(
+      payload,
+      "GROQ_API_KEY не е конфигуриран. Сигналът е приет по резервна политика."
+    );
   }
 
   const completion = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -121,75 +162,36 @@ async function moderateSignalWithGroq(payload: IntakePayload): Promise<GroqModer
       messages: [
         {
           role: "system",
-          content:
-            "You are a civic moderation assistant. Return JSON with keys: decision, reason, duplicate_hint. decision must be approved or rejected.",
+          content: MODERATION_SYSTEM_PROMPT,
         },
         {
           role: "user",
-          content: `Title: ${payload.title}\nDescription: ${payload.description}\nDistrict: ${payload.district ?? "Unknown"}\nSubmitter: ${payload.submitterName ?? "Anonymous"}`,
+          content: buildModerationUserPrompt(payload),
         },
       ],
     }),
   });
 
   if (!completion.ok) {
-    return {
-      decision: "approved",
-      reason: `Groq call failed with status ${completion.status}. Accepted by fallback policy.`,
-      duplicate_hint: "unknown",
-    };
+    return buildFallbackModeration(
+      payload,
+      `Groq върна грешка ${completion.status}. Сигналът е приет по резервна политика.`
+    );
   }
 
   const parsed = (await completion.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
   const content = parsed.choices?.[0]?.message?.content ?? "{}";
-  const normalized = JSON.parse(content) as GroqModeration;
 
-  return {
-    decision: normalized.decision === "rejected" ? "rejected" : "approved",
-    reason: normalized.reason ?? "No reason provided by model.",
-    duplicate_hint: normalized.duplicate_hint ?? "none",
-  };
+  return parseModerationContent(content, payload, publicSiteUrl);
 }
 
-async function summarizeSignalWithGroq(payload: IntakePayload): Promise<string> {
-  const groqApiKey = Deno.env.get("GROQ_API_KEY");
-  if (!groqApiKey) {
-    return payload.description.slice(0, 220);
-  }
-
-  const completion = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${groqApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.2,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You summarize civic issue reports. Return only one concise sentence in plain text.",
-        },
-        {
-          role: "user",
-          content: `Title: ${payload.title}\nDescription: ${payload.description}`,
-        },
-      ],
-    }),
-  });
-
-  if (!completion.ok) {
-    return payload.description.slice(0, 220);
-  }
-
-  const parsed = (await completion.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  return parsed.choices?.[0]?.message?.content?.trim() || payload.description.slice(0, 220);
+async function purgeExpiredPreviewSessions(supabase: ReturnType<typeof createClient>) {
+  await supabase
+    .from("intake_preview_sessions")
+    .delete()
+    .lt("expires_at", new Date().toISOString());
 }
 
 Deno.serve(async (request) => {
@@ -216,45 +218,128 @@ Deno.serve(async (request) => {
     return response({ error: "Missing required fields: title, description" }, 400);
   }
 
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  await purgeExpiredPreviewSessions(supabase);
+
+  if (payload.mode === "preview") {
+    const moderation = await moderateSignalWithGroq(toModerationInput(payload));
+
+    if (moderation.decision === "rejected") {
+      return response(
+        {
+          error: "Signal rejected by moderation policy",
+          moderation_reason: moderation.reason,
+          moderation,
+        },
+        422
+      );
+    }
+
+    const expiresAt = new Date(Date.now() + PREVIEW_TTL_MINUTES * 60 * 1000).toISOString();
+    const { data: previewSession, error: previewError } = await supabase
+      .from("intake_preview_sessions")
+      .insert({
+        title: payload.title.trim(),
+        description: payload.description.trim(),
+        district: payload.district?.trim() || null,
+        submitter_name: payload.submitterName?.trim() || null,
+        moderation,
+        expires_at: expiresAt,
+      })
+      .select("id")
+      .single();
+
+    if (previewError || !previewSession) {
+      return response({ error: previewError?.message ?? "Failed to store preview session" }, 500);
+    }
+
+    return response({
+      message: "Moderation preview ready",
+      preview_id: previewSession.id,
+      moderation,
+    });
+  }
+
   const turnstilePassed = await verifyTurnstile(payload.turnstileToken);
   if (!turnstilePassed) {
     return response({ error: "Turnstile verification failed" }, 403);
   }
 
-  const moderation = await moderateSignalWithGroq(payload);
+  if (!payload.previewId) {
+    return response({ error: "previewId is required. Run AI preview before submitting." }, 400);
+  }
+
+  if (!payload.descriptionChoice) {
+    return response({ error: "descriptionChoice is required (formatted or original)" }, 400);
+  }
+
+  const { data: previewSession, error: previewLoadError } = await supabase
+    .from("intake_preview_sessions")
+    .select("id,title,description,district,submitter_name,moderation,expires_at")
+    .eq("id", payload.previewId)
+    .maybeSingle();
+
+  if (previewLoadError) {
+    return response({ error: previewLoadError.message }, 500);
+  }
+
+  if (!previewSession) {
+    return response({ error: "Preview session not found or expired. Please run AI review again." }, 410);
+  }
+
+  if (new Date(previewSession.expires_at).getTime() < Date.now()) {
+    await supabase.from("intake_preview_sessions").delete().eq("id", previewSession.id);
+    return response({ error: "Preview session expired. Please run AI review again." }, 410);
+  }
+
+  if (
+    previewSession.title !== payload.title.trim() ||
+    previewSession.description !== payload.description.trim()
+  ) {
+    return response(
+      { error: "Signal text changed after preview. Please run AI review again." },
+      409
+    );
+  }
+
+  const moderation = previewSession.moderation as GroqModeration;
   if (moderation.decision === "rejected") {
+    return response({ error: "Preview session is rejected and cannot be submitted." }, 422);
+  }
+
+  let resolvedSubmission;
+  try {
+    resolvedSubmission = resolveSubmittedDescription(moderation, payload, payload.descriptionChoice);
+  } catch (resolveError) {
     return response(
       {
-        error: "Signal rejected by moderation policy",
-        moderation_reason: moderation.reason,
+        error: resolveError instanceof Error ? resolveError.message : "Invalid description choice",
       },
       422
     );
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
-  const aiSummary = await summarizeSignalWithGroq(payload);
+  const resolvedDistrict = resolveOrFallback(payload.district, "Unknown");
+  const resolvedSubmitterName = resolveOrFallback(payload.submitterName, "Anonymous");
 
   const { data: duplicateCandidate } = await supabase
     .from("signals")
     .select("id,title,description")
-    .eq("district", payload.district ?? null)
+    .eq("district", resolvedDistrict)
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const duplicate = duplicateCandidate?.find((signal) => {
-    const text = `${signal.title} ${signal.description}`.toLowerCase();
-    const sample = `${payload.title} ${payload.description}`.toLowerCase();
-    return text.includes(sample.slice(0, Math.min(30, sample.length)));
-  });
+  const duplicate = findDuplicateSignal(duplicateCandidate ?? [], payload);
 
   const { data: inserted, error } = await supabase
     .from("signals")
     .insert({
-      title: payload.title,
-      description: payload.description,
-      district: payload.district ?? "Unknown",
-      submitter_name: payload.submitterName ?? "Anonymous",
+      title: resolvedSubmission.title,
+      description: resolvedSubmission.description,
+      original_description: payload.description.trim(),
+      description_source: resolvedSubmission.source,
+      district: resolvedDistrict,
+      submitter_name: resolvedSubmitterName,
       status: "Pending",
       ai_moderation_status: "approved",
       ai_moderation_reason: moderation.reason,
@@ -267,26 +352,31 @@ Deno.serve(async (request) => {
     return response({ error: error.message }, 500);
   }
 
+  await supabase.from("intake_preview_sessions").delete().eq("id", previewSession.id);
+
   const timelineSeed: SignalTimelineSeed[] = [
     {
       event_type: "original_signal",
       payload: {
         actor: "citizen",
-        message: payload.description,
+        message: payload.description.trim(),
       },
     },
     {
       event_type: "ai_summary",
       payload: {
         actor: "ai",
-        message: aiSummary,
+        message: moderation.summary,
       },
     },
     {
       event_type: "submitted_to_municipality",
       payload: {
         actor: "system",
-        message: `Signal submitted to municipality for district: ${payload.district ?? "Unknown"}.`,
+        message:
+          resolvedSubmission.source === "formatted"
+            ? `Сигналът е изпратен към общината с AI-форматиран официален текст (квартал: ${resolvedDistrict}).`
+            : `Сигналът е изпратен към общината с оригиналния текст на подателя (квартал: ${resolvedDistrict}).`,
       },
     },
   ];
@@ -336,6 +426,7 @@ Deno.serve(async (request) => {
     {
       message: "Signal accepted and stored",
       moderation,
+      description_source: resolvedSubmission.source,
       signal: inserted,
       attachments: uploadedFiles,
       duplicate_of_signal_id: duplicate?.id ?? null,

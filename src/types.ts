@@ -12,7 +12,8 @@ export type SignalTimelineEventType =
   | "ai_summary"
   | "submitted_to_municipality"
   | "municipality_response"
-  | "ai_response_review";
+  | "ai_response_review"
+  | "platform_follow_up";
 
 export interface SignalAttachment {
   id: string;
@@ -63,8 +64,38 @@ export interface SignalRow {
   upvotes: number | null;
   downvotes: number | null;
   created_at: string;
+  submitter_name?: string | null;
+  ai_moderation_status?: string | null;
+  ai_moderation_reason?: string | null;
+  updated_at?: string | null;
   signal_attachments?: SignalAttachmentRow[];
   signal_events?: SignalEventRow[];
+}
+
+export interface AdminSignal {
+  id: string;
+  title: string;
+  description: string;
+  district: string;
+  neighborhoodId: string | null;
+  submitterName: string;
+  status: SignalStatus;
+  priority: SignalPriority;
+  upvotes: number;
+  downvotes: number;
+  aiModerationStatus: string;
+  aiModerationReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  attachments: SignalAttachment[];
+  communicationTimeline: SignalTimelineEvent[];
+}
+
+export interface ResponseReviewResult {
+  satisfactory: boolean;
+  reason: string;
+  suggested_follow_up: string;
+  platform_reply: string;
 }
 
 export interface SignalEventRow {

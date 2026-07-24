@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { derivePriority } from "../_shared/priority.ts";
 
 type VoteType = "up" | "down";
 
@@ -19,12 +20,6 @@ function response(body: Record<string, unknown>, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-}
-
-function derivePriority(score: number): "Critical" | "High" | "Normal" {
-  if (score >= 30) return "Critical";
-  if (score >= 12) return "High";
-  return "Normal";
 }
 
 Deno.serve(async (request) => {

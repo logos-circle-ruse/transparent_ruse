@@ -15,8 +15,8 @@ export interface FetchSignalsResult {
   error?: string;
 }
 
-function mapRowToSignal(row: SignalRow): Signal {
-  const district = row.district ?? "Unknown";
+export function mapRowToSignal(row: SignalRow): Signal {
+  const district = row.district?.trim() ? row.district.trim() : "Unknown";
   const aliasKey = district.toLowerCase();
   const timeline = mapTimeline(row);
 
@@ -47,7 +47,8 @@ function parseEventType(rawType: string): SignalTimelineEventType | undefined {
     rawType === "ai_summary" ||
     rawType === "submitted_to_municipality" ||
     rawType === "municipality_response" ||
-    rawType === "ai_response_review"
+    rawType === "ai_response_review" ||
+    rawType === "platform_follow_up"
   ) {
     return rawType;
   }
@@ -63,6 +64,7 @@ function parseActor(rawActor: string | undefined, eventType: SignalTimelineEvent
   if (eventType === "original_signal") return "citizen";
   if (eventType === "ai_summary" || eventType === "ai_response_review") return "ai";
   if (eventType === "municipality_response") return "municipality";
+  if (eventType === "platform_follow_up") return "system";
   return "system";
 }
 

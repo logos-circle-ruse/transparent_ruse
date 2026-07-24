@@ -30,6 +30,7 @@ export function SignalModal({
     submitted_to_municipality: text.communicationEventSubmittedToMunicipality,
     municipality_response: text.communicationEventMunicipalityResponse,
     ai_response_review: text.communicationEventAiResponseReview,
+    platform_follow_up: text.communicationEventPlatformFollowUp,
   } as const;
 
   const timelineEvents = [...signal.communicationTimeline].sort(

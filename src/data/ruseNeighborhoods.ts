@@ -11,7 +11,8 @@ export function normalizeNeighborhoodKey(value: string) {
     .replace(/\./g, "")
     .replace(/жк|ж к|кв|вз|в з/g, "")
     .replace(/-|_/g, " ")
-    .replace(/\s+/g, " ");
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export const ruseNeighborhoods: RuseNeighborhood[] = [
